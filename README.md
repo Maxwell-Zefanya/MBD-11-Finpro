@@ -13,6 +13,7 @@ Berdasarkan konteks yang diberikan, dapat dilihat bahwa kegiatan lari memerlukan
 ## ii. Desain dan Implementasi Hardware
 ### Prasyarat
 ### Desain & Implementasi
+![](https://i.imgur.com/PgDKn8w.png)
 
 ## iii. Desain dan Implementasi Software
 ### Prasyarat
