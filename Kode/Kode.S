@@ -2,26 +2,49 @@
 #include "avr/io.h"
 
 ;==============================================================
+
+;   Register Usage Documentation
+;   R16:
+;   R17:
+;   R18:
+;   R19:
+;   R20:
+;   R21:
+;   R22:
+;   R23:
+;   R24:
+;   R25:
+;   R26:
+;   R27:
+;   R28:
+;   R29:
+;   R30:
+;   R31:
+
+;==============================================================
+;==============================================================
     ; Pin Directives
     ; Digital: use in PORTD
-    .def BTN_ENA 0
-    .def BTN_RES 1
+    .equ BTN_ENA, 0
+    .equ BTN_RES, 1
 
     ; LED: use in PORTB
-    .def LED_RED 0
-    .def LED_YEL 1
-    .def LED_GRE 2
+    .equ LED_RED, 0
+    .equ LED_YEL, 1
+    .equ LED_GRE, 2
 
     ; Sensor: use in PORTD
-    .def SENSOR_PIN 7
+    .equ SENSOR_PIN, 7
 
     ; Display: use in PORTC (LCD)
-    .def LCD_SDA 4
-    .def LCD_SCL 5
+    .equ LCD_SDA, 4
+    .equ LCD_SCL, 5
 
 ;==============================================================
 ; Pre-defined data
 .global main
+.global __vector_1
+.global __vector_2
 .section .data
     lap_count:      .byte 0
     timer_counter:  .byte 0
