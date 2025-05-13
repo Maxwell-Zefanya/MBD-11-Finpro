@@ -4,24 +4,23 @@
 ;==============================================================
 
 ;   Register Usage Documentation
-;   R16:
-;   R17:
-;   R18:
-;   R19:
-;   R20:
-;   R21:
-;   R22:
-;   R23:
-;   R24:
-;   R25:
-;   R26:
-;   R27:
-;   R28:
-;   R29:
-;   R30:
-;   R31:
+;   R16: Setup
+;   R17: 
+;   R18: 
+;   R19: 
+;   R20: 
+;   R21: I2C
+;   R22: 
+;   R23: 
+;   R24: 
+;   R25: 
+;   R26: 
+;   R27: I2C
+;   R28: Pace Timer
+;   R29: Total Time Output
+;   R30: 
+;   R31: 
 
-;==============================================================
 ;==============================================================
     ; Pin Directives
     ; Digital: use in PORTD
@@ -43,8 +42,8 @@
 ;==============================================================
 ; Pre-defined data
 .global main
-.global __vector_1
-.global __vector_2
+.global __vector_1      ; INT0
+.global __vector_2      ; INT1
 .section .data
     lap_count:      .byte 0
     timer_counter:  .byte 0
@@ -70,19 +69,73 @@
 ; Code Segment
 .section .text
 main:
-    ; All: Setup DDR
     ; Digital: All as i/p
     LDI     R16, (0<<BTN_ENA) || (0<<BTN_RES)
     OUT     DDRD, R16
+
     ; LED: All as o/p
     LDI     R16, (1<<LED_RED) || (1<<LED_YEL) || (1<<LED_GRE)
     OUT     DDRB, R16
+
     ; Sensor: All as i/p
     LDI     R16, (0<<SENSOR_PIN)
     OUT     DDRD, R16
+
     ; Display: Setup I2C as Master
     RCALL I2C_init
-    
+
+    ; Timer: Clear register
+    CLR R29
+
+    ; All: Enable interrupt
+    LDI R16, (0<<ISC11) || (0<<ISC10) || (0<<ISC01) || (0<<ISC00)
+        STS EICRA, R16      ;Interrupts on low
+    LDI R16, (1<<INT0) || (1<<INT1)
+        OUT EIMSK, R16      ;Enable INT0 and INT1
+    CLR R16
+
+;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
+loop:
+    RCALL start_timer
+    INC R29
+    JMP loop
+
+;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
+start_timer:
+    .EQU value, 49910   ;value to give 1 sec delay
+    LDI R28, hi8(value)
+    STS TCNT1H, R28
+    LDI R28, lo8(value)
+    STS TCNT1L, R28     ;initialize counter TCNT1 = value
+
+    LDI R28, 0b00000000
+    STS TCCR1A, R28
+    LDI R28, 0b00000101
+    STS TCCR1B, R28     ;normal mode, prescaler = 1024
+
+    l2: IN R28, TIFR1   ;get TIFR1 byte & check
+    SBRS R28, TOV1      ;if TOV1=1, skip next instruction
+    RJMP l2             ;else, loop back & check TOV1 flag
+    LDI R28, 1<<TOV1
+    OUT TIFR1, R28      ;clear TOV1 flag
+    LDI R28, 0b00000000
+    STS TCCR1B, R28     ;stop timer1
+    RET
+
+;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
+; Interrupt for sensor
+; Purpose: stop timer
+__vector_2:
+    ;Disable clock
+    LDI R28, 0b00000000
+    STS TCCR1B, R28
+    LDI R28, 1<<TOV1
+
+    ;Clear TOV1 flag
+    OUT TIFR1, R28
+    LDI R28, 0b00000000
+    RETI
+
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 I2C_init:
     LDI   R21, 0
