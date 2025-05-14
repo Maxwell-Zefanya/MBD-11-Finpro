@@ -10,14 +10,14 @@
 ;   R19: 
 ;   R20: 
 ;   R21: I2C
-;   R22: 
+;   R22: I2C
 ;   R23: 
 ;   R24: 
 ;   R25: 
-;   R26: 
-;   R27: I2C
+;   R26: Total Time Output Low
+;   R27: Total Time Output High
 ;   R28: Pace Timer
-;   R29: Total Time Output
+;   R29: 
 ;   R30: 
 ;   R31: 
 
@@ -85,7 +85,8 @@ main:
     RCALL I2C_init
 
     ; Timer: Clear register
-    CLR R29
+    CLR R26
+    CLR R27
 
     ; All: Enable interrupt
     LDI R16, (0<<ISC11) || (0<<ISC10) || (0<<ISC01) || (0<<ISC00)
@@ -96,9 +97,9 @@ main:
 
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 loop:
-    RCALL start_timer
-    INC R29
-    JMP loop
+    RCALL   start_timer
+    ADIW    X, 1        ; Add 1 to R27:R26
+    JMP     loop
 
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 start_timer:
@@ -159,7 +160,7 @@ wtw:LDS   R21, TWCR
 
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 I2C_write:
-    STS   TWDR, R27       ;copy SLA+W into data register
+    STS   TWDR, R22       ;copy SLA+W into data register
     LDI   R21, (1<<TWINT)|(1<<TWEN)
     STS   TWCR, R21       ;transmit SLA+W
     ;----------------------------------------------------------
