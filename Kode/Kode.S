@@ -21,26 +21,6 @@
 ;   R31: 
 
 ;==============================================================
-
-;   Register Usage Documentation
-;   R16: Setup
-;   R17: 
-;   R18: 
-;   R19: 
-;   R20: 
-;   R21: I2C
-;   R22: I2C
-;   R23: 
-;   R24: 
-;   R25: 
-;   R26: Total Time Output Low
-;   R27: Total Time Output High
-;   R28: Pace Timer
-;   R29: 
-;   R30: 
-;   R31: 
-
-;==============================================================
     ; Pin Directives
     ; Digital: use in PORTD
     .equ BTN_ENA, 0
