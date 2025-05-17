@@ -4,14 +4,14 @@
 
 ;   Register Usage Documentation
 ;   R16: Setup, distance state
-;   R17: 
-;   R18: conversion result (minute)
-;   R19: conversion result (second)
-;   R20: 
+;   R17: conversion result (minute)
+;   R18: conversion result (second)
+;   R19: conversion to bcd result (puluhan)
+;   R20: conversion to bcd result (satuan)
 ;   R21: I2C
 ;   R22: I2C
-;   R23: 
-;   R24: 
+;   R23: counter for bcd conversion
+;   R24: pembanding dalam bcd comnversion
 ;   R25: 
 ;   R26: Total Time Output Low
 ;   R27: Total Time Output High
@@ -141,15 +141,30 @@ __vector_2:
     OUT TIFR1, R28
     LDI R28, 0b00000000
 
+
+    RCALL convert_to_minute
+    RCALL convert_to_BCD        ;ubah detik ke bentuk BCD
+    MOV R18, R17
+    RCALL convert_to_BCD        ;ubah menit ke bentuk BCD
+    //tampilin waktu per lab ke serial monitor
+
     ;convert waktu (seconds/kilometers)
     RCALL convert_disctance
+    RCALL convert_to_minute
+    RCALL convert_to_BCD        ;ubah detik ke bentuk BCD
+    MOV R18, R17
+    RCALL convert_to_BCD        ;ubah menit ke bentuk BCD
+    ;tampilin pace ke lcd dan serial monitor
+    
+
+
+
+
     RETI
 
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 I2C_init:
-    LDI   R21, 0         
-    -p 
-    
+    LDI   R21, 0
     STS   TWSR, R21       ;prescaler = 0
     LDI   R21, 12         ;division factor = 12
     STS   TWBR, R21       ;SCK freq = 400kHz
@@ -172,7 +187,7 @@ select_button:
     ; lds   r16, PINC
     ; sbrs  r16, 2
     ; rjmp  set_2000
-    
+
     LDI R16, 0          ;default jarak = 500m
     SBIC PINC, 0
     LDI R16 , 0
@@ -298,33 +313,56 @@ dis_2000m:
 
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 convert_to_minute:
-    ; pastikan R18 dan R19 kosong
+    ; pastikan R17 dan R18 kosong
+    CLR R17
     CLR R18
-    CLR R19
-l1:
+A1:
     SBIW x, 60
     //cek jika negatif
     //masalah : SBIW itu unsigned, jadi jika isi dari MSB R26 1, bisa langsung loncat ke l2
     //anggap saja timer ga mungkin mencapai nilai tersebut
-    BRMI l2 //jika negatif jump ke l2
-    INC R18
-    JMP l1
-l2: 
+    BRMI A2 //jika negatif jump ke l2
+    INC R17
+    JMP A1
+A2: 
     SBIW x, -60
-    MOV R19, R27
+    MOV R18, R27
 
-    CLR R26
-    CLR R27
+    ; CLR R26
+    ; CLR R27
     RET
 
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 ; ````````````````````````````````````````````````````````````;
-;Mengubah nilai menit dan detik (R18:R19) ke BCD untuk ditampilkan di LCD dan serial monitor
+;Mengubah nilai menit dan detik (R17:R18) ke BCD untuk ditampilkan di LCD dan serial monitor
 ; ````````````````````````````````````````````````````````````;
+; PUSH R18
+; CALL convert_to_BCD
+
 convert_to_BCD: 
+    ;R19 digunakan untuk menyimpan hasil puluhan
+    ;R20 digunakan untuk menyimpan hasil satuan
+    ;R23 digunakan untuk counter
+    ;R24 digunakan untuk pembanding 
+    CLR R23
+    LDI R24, 10
+    CLR R19
+    CLR R20
+l3:
+    ; POP R18
+    SUB R18, R24            ;kurangi detik dengan 10
+    NRMI l4                 ;jika negatif jump ke l4
+    INC R23                 ;increment counter
+    SUBI R24, -10           ;tambahin pembanding dengan 10
+    JMP l3                  ;loop ke l3
 
-
-
+l4: 
+    ADD R18, R24
+    MOV R19, R23            ;puluhan = counter
+    MOV R20, R18
+    PUSH R20
+    PUSH R19                ;masukkan hasil ke stack
+    RET
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
