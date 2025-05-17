@@ -5,8 +5,8 @@
 ;   Register Usage Documentation
 ;   R16: Setup, distance state
 ;   R17: 
-;   R18: 
-;   R19: 
+;   R18: conversion result (minute)
+;   R19: conversion result (second)
 ;   R20: 
 ;   R21: I2C
 ;   R22: I2C
@@ -159,21 +159,29 @@ I2C_init:
 
 ; ========= Button Selection =========
 select_button:
-    in r19, PINC
+    ; in r19, PINC
 
-    lds   r16, PINC      ; Load PINC into r16
-    sbrs  r16, 0         ; Skip if PC0 is high
-    rjmp  set_500
+    ; lds   r16, PINC      ; Load PINC into r16
+    ; sbrs  r16, 0         ; Skip if PC0 is high
+    ; rjmp  set_500
 
-    lds   r16, PINC
-    sbrs  r16, 1
-    rjmp  set_1000
+    ; lds   r16, PINC
+    ; sbrs  r16, 1
+    ; rjmp  set_1000
 
-    lds   r16, PINC
-    sbrs  r16, 2
-    rjmp  set_2000
+    ; lds   r16, PINC
+    ; sbrs  r16, 2
+    ; rjmp  set_2000
+    
+    LDI R16, 0          ;default jarak = 500m
+    SBIC PINC, 0
+    LDI R16 , 0
+    SBIC PINC, 1
+    LDI R16 , 1
+    SBIC PINC, 2
+    LDI R16 , 2
 
-    rjmp select_button
+    RET
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 I2C_write:
     STS   TWDR, R22       ;copy SLA+W into data register
@@ -287,8 +295,36 @@ dis_2000m:
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 ;=============================================================;
 
+
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 convert_to_minute:
-    
+    ; pastikan R18 dan R19 kosong
+    CLR R18
+    CLR R19
+l1:
+    SBIW x, 60
+    //cek jika negatif
+    //masalah : SBIW itu unsigned, jadi jika isi dari MSB R26 1, bisa langsung loncat ke l2
+    //anggap saja timer ga mungkin mencapai nilai tersebut
+    BRMI l2 //jika negatif jump ke l2
+    INC R18
+    JMP l1
+l2: 
+    SBIW x, -60
+    MOV R19, R27
+
+    CLR R26
+    CLR R27
+    RET
+
+;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
+
+;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
+; ````````````````````````````````````````````````````````````;
+;Mengubah nilai menit dan detik (R18:R19) ke BCD untuk ditampilkan di LCD dan serial monitor
+; ````````````````````````````````````````````````````````````;
+convert_to_BCD: 
+
+
 
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
