@@ -173,7 +173,7 @@ l6: LDS   R24, UCSR0A
     RJMP  agn2                       ;loop back & get next character
     ;--------------------------------------------------------------------
 
-ext1:   
+ext2:   
     POP R23
     STS UDR0, R23               ;Kirimkan bcd puluhan detik ke serial monitor   
     LDI R23, 0x3A               ;ascii dari  `:`
