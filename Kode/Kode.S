@@ -10,15 +10,15 @@
 ;   R20: conversion to bcd result (satuan)
 ;   R21: I2C
 ;   R22: I2C
-;   R23: counter for bcd conversion
-;   R24: pembanding dalam bcd comnversion
+;   R23: counter for bcd conversion, serial communication
+;   R24: pembanding dalam bcd conversion, serial communication
 ;   R25: 
 ;   R26: Total Time Output Low
 ;   R27: Total Time Output High
 ;   R28: Pace Timer
 ;   R29: 
-;   R30: 
-;   R31: 
+;   R30: Serial communication
+;   R31: Serial communication
 
 ;==============================================================
     ; Pin Directives
@@ -100,6 +100,17 @@ main:
         OUT EIMSK, R16      ;Enable INT0 and INT1
     CLR R16
 
+    ; initialization of serial com
+    CLR   R24
+    STS   UCSR0A, R24               ;clear UCSR0A register
+    STS   UBRR0H, R24               ;clear UBRR0H register
+    LDI   R24, 103                  ;& store in UBRR0L 103 value
+    STS   UBRR0L, R24               ;to set baud rate 9600
+    LDI   R24, 1<<RXEN0 | 1<<TXEN0  ;enable RXB & TXB
+    STS   UCSR0B, R24
+    LDI   R24, 1<<UCSZ00 | 1<<UCSZ01;asynch, no parity, 1 stop, 8 bits
+    STS   UCSR0C, R24
+
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 loop:
     RCALL   start_timer
@@ -112,7 +123,33 @@ hitung:
     MOV R18, R17
     RCALL convert_to_BCD        ;ubah menit ke bentuk BCD
     //tampilin waktu per lab ke serial monitor
+    LDI   R30, lo8(message_time)
+    LDI   R31, hi8(message_time)
+agn1:
+    LPM   R23, Z+                   ;load char of string onto R23
+    CPI   R23, 0                    ;check if R23=0 (end of string)
+    BREQ  ext1                      ;if yes, exit
 
+l5: LDS   R24, UCSR0A
+    SBRS  R24, UDRE0                ;test data buffer if data can be sent
+    RJMP  l5
+    STS   UDR0, R23                 ;send char in R23 to serial monitor
+    ;--------------------------------------------------------------------
+    RJMP  agn1                       ;loop back & get next character
+    ;--------------------------------------------------------------------
+
+ext1:   
+    POP R23
+    STS UDR0, R23               ;Kirimkan bcd puluhan menit ke serial monitor   
+    LDI R23, 0x3A               ;ascii dari  `:`
+    STS UDR0, R23           
+    POP R23                     ;kirimkan bcd satuan menit ke serial monitor
+    STS UDR0, R23
+    LDI R23, 10               
+    STS UDR0, R23
+    LDI R23, 13               
+    STS UDR0, R23
+    
     ;convert waktu (seconds/kilometers)
     RCALL convert_disctance
     RCALL convert_to_minute
@@ -120,6 +157,34 @@ hitung:
     MOV R18, R17
     RCALL convert_to_BCD        ;ubah menit ke bentuk BCD
     ;tampilin pace ke lcd dan serial monitor
+    LDI   R30, lo8(message_pace)
+    LDI   R31, hi8(message_pace)
+
+agn2:
+    LPM   R23, Z+                   ;load char of string onto R23
+    CPI   R23, 0                    ;check if R23=0 (end of string)
+    BREQ  ext2                      ;if yes, exit
+
+l6: LDS   R24, UCSR0A
+    SBRS  R24, UDRE0                ;test data buffer if data can be sent
+    RJMP  l6
+    STS   UDR0, R23                 ;send char in R23 to serial monitor
+    ;--------------------------------------------------------------------
+    RJMP  agn2                       ;loop back & get next character
+    ;--------------------------------------------------------------------
+
+ext1:   
+    POP R23
+    STS UDR0, R23               ;Kirimkan bcd puluhan detik ke serial monitor   
+    LDI R23, 0x3A               ;ascii dari  `:`
+    STS UDR0, R23           
+    POP R23                     ;kirimkan bcd satuan detik ke serial monitor
+    STS UDR0, R23
+    LDI R23, 10               
+    STS UDR0, R23
+    LDI R23, 13               
+    STS UDR0, R23
+
     CLT
     JMP loop
 
@@ -364,9 +429,13 @@ l3:
 
 l4: 
     ADD R18, R24
+    SUBI R18, -48           ;ubah jadi ascii
+    SUBI R23, -48           ;ubah jadi ascii
     MOV R19, R23            ;puluhan = counter
     MOV R20, R18
     PUSH R20
     PUSH R19                ;masukkan hasil ke stack
+    CLR R23
+    CLR R24
     RET
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
