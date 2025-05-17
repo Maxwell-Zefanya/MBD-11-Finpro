@@ -104,7 +104,24 @@ main:
 loop:
     RCALL   start_timer
     ADIW    X, 1        ; Add 1 to R27:R26
-    JMP     loop
+    BRTC loop
+
+hitung:
+    RCALL convert_to_minute
+    RCALL convert_to_BCD        ;ubah detik ke bentuk BCD
+    MOV R18, R17
+    RCALL convert_to_BCD        ;ubah menit ke bentuk BCD
+    //tampilin waktu per lab ke serial monitor
+
+    ;convert waktu (seconds/kilometers)
+    RCALL convert_disctance
+    RCALL convert_to_minute
+    RCALL convert_to_BCD        ;ubah detik ke bentuk BCD
+    MOV R18, R17
+    RCALL convert_to_BCD        ;ubah menit ke bentuk BCD
+    ;tampilin pace ke lcd dan serial monitor
+    CLT
+    JMP loop
 
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 start_timer:
@@ -140,25 +157,7 @@ __vector_2:
     ;Clear TOV1 flag
     OUT TIFR1, R28
     LDI R28, 0b00000000
-
-
-    RCALL convert_to_minute
-    RCALL convert_to_BCD        ;ubah detik ke bentuk BCD
-    MOV R18, R17
-    RCALL convert_to_BCD        ;ubah menit ke bentuk BCD
-    //tampilin waktu per lab ke serial monitor
-
-    ;convert waktu (seconds/kilometers)
-    RCALL convert_disctance
-    RCALL convert_to_minute
-    RCALL convert_to_BCD        ;ubah detik ke bentuk BCD
-    MOV R18, R17
-    RCALL convert_to_BCD        ;ubah menit ke bentuk BCD
-    ;tampilin pace ke lcd dan serial monitor
-    
-
-
-
+    SET 
 
     RETI
 
@@ -189,11 +188,15 @@ select_button:
     ; rjmp  set_2000
 
     LDI R16, 0          ;default jarak = 500m
-    SBIC PINC, 0
+    LDS R5, PINC
+    SBRC R5, 0
+    ;SBIC PINC, 0
     LDI R16 , 0
-    SBIC PINC, 1
+    ;SBIC PINC, 1
+    SBRC R5, 1
     LDI R16 , 1
-    SBIC PINC, 2
+    ;SBIC PINC, 2
+    SBRC R5, 2
     LDI R16 , 2
 
     RET
@@ -325,7 +328,8 @@ A1:
     INC R17
     JMP A1
 A2: 
-    SBIW x, -60
+    ;SBIW x, -30
+    ADIW x, 60
     MOV R18, R27
 
     ; CLR R26
@@ -353,7 +357,7 @@ convert_to_BCD:
 l3:
     ; POP R18
     SUB R18, R24            ;kurangi detik dengan 10
-    NRMI l4                 ;jika negatif jump ke l4
+    BRMI l4                 ;jika negatif jump ke l4
     INC R23                 ;increment counter
     SUBI R24, -10           ;tambahin pembanding dengan 10
     JMP l3                  ;loop ke l3
