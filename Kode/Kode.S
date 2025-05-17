@@ -316,29 +316,11 @@ select_button:
     ;SBIC PINC, 2
     SBRC R5, 2
     LDI R16 , 2
-    JMP select_button
 
-; ========= Set Distance Values =========
-set_500:
-    ldi r17, hi8(0x01F4)
-    ldi r16, lo8(0x01F4)
-    rjmp wait_start
-
-set_1000:
-    ldi r17, hi8(0x03E8)
-    ldi r16, lo8(0x03E8)
-    rjmp wait_start
-
-set_2000:
-    ldi r17, hi8(0x07D0)
-    ldi r16, lo8(0x07D0)
-    rjmp wait_start
-
-; ========= Wait for Start Button (PD2) =========
-wait_start:
+wait1:
     lds   r16, PIND
     sbrs  r16, 2
-    rjmp wait_start
+    rjmp wait1
     rcall delay_short
 
     ; LED Sequence
@@ -360,7 +342,51 @@ wait_start:
     LDI   R30, lo8(message_running)
     LDI   R31, hi8(message_running)
     CALL  lcd_print
-    rjmp main
+    JMP loop
+
+; ; ========= Set Distance Values =========
+; set_500:
+;     ldi r17, hi8(0x01F4)
+;     ldi r16, lo8(0x01F4)
+;     rjmp wait_start
+
+; set_1000:
+;     ldi r17, hi8(0x03E8)
+;     ldi r16, lo8(0x03E8)
+;     rjmp wait_start
+
+; set_2000:
+;     ldi r17, hi8(0x07D0)
+;     ldi r16, lo8(0x07D0)
+;     rjmp wait_start
+
+; ========= Wait for Start Button (PD2) =========
+; wait_start:
+;     lds   r16, PIND
+;     sbrs  r16, 2
+;     rjmp wait_start
+;     rcall delay_short
+
+;     ; LED Sequence
+;     ldi r18, (1<<PB0)
+;     out PORTB, r18
+;     rcall delay_long
+
+;     ldi r18, (1<<PB1)
+;     out PORTB, r18
+;     rcall delay_long
+
+;     ldi r18, (1<<PB2)
+;     out PORTB, r18
+;     rcall delay_long
+
+;     clr r18
+;     out PORTB, r18
+
+;     LDI   R30, lo8(message_running)
+;     LDI   R31, hi8(message_running)
+;     CALL  lcd_print
+;     rjmp main
 
 ; ========= Delay Subroutines =========
 
