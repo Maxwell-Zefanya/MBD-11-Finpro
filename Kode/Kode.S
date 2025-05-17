@@ -1,5 +1,4 @@
-#define __SFR_OFFSET 0x00
-#include "avr/io.h"
+#include <avr/io.h>
 
 ;==============================================================
 
@@ -69,6 +68,12 @@
 ; Code Segment
 .section .text
 main:
+    ; Initialize Stack Pointer
+    ldi r18, hi8(RAMEND)
+    STS SPH, r18
+    ldi r18, lo8(RAMEND)
+    STS SPL, r18
+    
     ; Digital: All as i/p
     LDI     R16, (0<<BTN_ENA) || (0<<BTN_RES)
     OUT     DDRD, R16
@@ -152,17 +157,23 @@ I2C_init:
     STS   TWCR, R21       ;enable TWI
     RET
 
-;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
-I2C_startW:
-    LDI   R21, (1<<TWINT)|(1<<TWSTA)|(1<<TWEN)
-    STS   TWCR, R21       ;transmit START condition
-    ;----------------------------------------------------------
-wtw:LDS   R21, TWCR
-    SBRS  R21, TWINT      ;TWI interrupt = 1?
-    RJMP  wtw             ;no, wait for end of transmission
-    ;----------------------------------------------------------
-    RET
+; ========= Button Selection =========
+select_button:
+    in r19, PINC
 
+    lds   r16, PINC      ; Load PINC into r16
+    sbrs  r16, 0         ; Skip if PC0 is high
+    rjmp  set_500
+
+    lds   r16, PINC
+    sbrs  r16, 1
+    rjmp  set_1000
+
+    lds   r16, PINC
+    sbrs  r16, 2
+    rjmp  set_2000
+
+    rjmp select_button
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 I2C_write:
     STS   TWDR, R22       ;copy SLA+W into data register
@@ -174,11 +185,69 @@ wt2:LDS   R21, TWCR
     RJMP  wt2             ;wait for end of transmission
     RET
 
-;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
-I2C_stop:
-    LDI   R21, (1<<TWINT)|(1<<TWSTO)|(1<<TWEN)
-    STS   TWCR, R21       ;transmit STOP condition
-    RET
+; ========= Set Distance Values =========
+set_500:
+    ldi r17, hi8(0x01F4)
+    ldi r16, lo8(0x01F4)
+    rjmp wait_start
+
+set_1000:
+    ldi r17, hi8(0x03E8)
+    ldi r16, lo8(0x03E8)
+    rjmp wait_start
+
+set_2000:
+    ldi r17, hi8(0x07D0)
+    ldi r16, lo8(0x07D0)
+    rjmp wait_start
+
+; ========= Wait for Start Button (PD2) =========
+wait_start:
+    lds   r16, PIND
+    sbrs  r16, 2
+    rjmp wait_start
+    rcall delay_short
+
+    ; LED Sequence
+    ldi r18, (1<<PB0)
+    out PORTB, r18
+    rcall delay_long
+
+    ldi r18, (1<<PB1)
+    out PORTB, r18
+    rcall delay_long
+
+    ldi r18, (1<<PB2)
+    out PORTB, r18
+    rcall delay_long
+
+    clr r18
+    out PORTB, r18
+    rjmp main
+
+; ========= Delay Subroutines =========
+
+delay_short:
+    ldi r21, 50
+ds1:
+    ldi r22, 200
+ds2:
+    dec r22
+    brne ds2
+    dec r21
+    brne ds1
+    ret
+
+delay_long:
+    ldi r23, 100
+dl1:
+    ldi r24, 250
+dl2:
+    dec r24
+    brne dl2
+    dec r23
+    brne dl1
+    ret
 
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 
