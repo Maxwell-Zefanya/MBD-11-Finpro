@@ -8,8 +8,8 @@
 ;   R18: conversion result (second)
 ;   R19: conversion to bcd result (puluhan)
 ;   R20: conversion to bcd result (satuan)
-;   R21: I2C
-;   R22: I2C
+;   R21: I2C setup
+;   R22: I2C write
 ;   R23: counter for bcd conversion, serial communication
 ;   R24: pembanding dalam bcd conversion, serial communication
 ;   R25: 
@@ -17,8 +17,8 @@
 ;   R27: Total Time Output High
 ;   R28: Pace Timer
 ;   R29: 
-;   R30: Serial communication
-;   R31: Serial communication
+;   R30: Serial communication, I2C load message
+;   R31: Serial communication, I2C load message
 
 ;==============================================================
     ; Pin Directives
@@ -53,16 +53,13 @@
     pace_current:   .byte 0
     ir_state_prev:  .byte 0
 
-    message_welcome:    .ascii "PaceGuard System"
-                        .byte 10,13,0
-    message_ready:      .ascii "Ready to Start"
-                        .byte 10,13,0
-    message_disabled:   .ascii "System Disabled"
-                        .byte 10,13,0
-    message_running:    .asciz "Running: "
+    message_welcome:    .asciz "PaceGuard System"
+    message_ready:      .asciz "Ready to Start"
+    message_running:    .asciz "Running..."
     message_lap:        .asciz "Lap: "
-    message_time:       .asciz "Time: "
-    message_pace:       .asciz "Pace: "
+
+    message_time:       .ascii "Time: "
+    message_pace:       .ascii "Pace: "
 
 ;==============================================================
 ; Code Segment
@@ -86,9 +83,6 @@ main:
     LDI     R16, (0<<SENSOR_PIN)
     OUT     DDRD, R16
 
-    ; Display: Setup I2C as Master
-    RCALL I2C_init
-
     ; Timer: Clear register
     CLR R26
     CLR R27
@@ -110,6 +104,19 @@ main:
     STS   UCSR0B, R24
     LDI   R24, 1<<UCSZ00 | 1<<UCSZ01;asynch, no parity, 1 stop, 8 bits
     STS   UCSR0C, R24
+
+    ; Display: Setup I2C as Master
+    RCALL I2C_init
+
+    ; Display: Print welcome message
+    LDI   R30, lo8(message_welcome)
+    LDI   R31, hi8(message_welcome)
+    CALL  lcd_print
+    RCALL start_timer
+    LDI   R30, lo8(message_ready)
+    LDI   R31, hi8(message_ready)
+    CALL  lcd_print
+    JMP   select_button
 
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 loop:
@@ -173,7 +180,7 @@ l6: LDS   R24, UCSR0A
     RJMP  agn2                       ;loop back & get next character
     ;--------------------------------------------------------------------
 
-ext1:   
+ext2:   
     POP R23
     STS UDR0, R23               ;Kirimkan bcd puluhan detik ke serial monitor   
     LDI R23, 0x3A               ;ascii dari  `:`
@@ -226,6 +233,38 @@ __vector_2:
 
     RETI
 
+;========================= I2C & LCD ==========================
+lcd_print:
+    RCALL I2C_start
+    LDI   R22, 0b01000000                       ; Set slave address
+    RCALL I2C_write
+    LDI   R22, 0b10000000                       ; Step 1: Function set
+    RCALL I2C_write
+    LDI   R22, 0b00111100                       
+    RCALL I2C_write
+    LDI   R22, 0b10000000                       ; Step 2: Display ON
+    RCALL I2C_write
+    LDI   R22, 0b00001100
+    RCALL I2C_write
+    LDI   R22, 0b10000000                       ; Step 3: Display CLR
+    RCALL I2C_write
+    LDI   R22, 0b00000001
+    RCALL I2C_write
+    LDI   R22, 0b10000000                       ; Step 4: Entry mode
+    RCALL I2C_write
+    LDI   R22, 0b00000100
+    RCALL I2C_write
+    LDI   R22, 0b01000000                       ; Begin transmit chars
+    RCALL I2C_write
+wrt:LPM   R22, Z+                               ; Load char of string onto R22
+    CPI   R22, 0                                ; Check if R22=0 (end of string)
+    BREQ  fin                                   ; If yes, exit
+    RCALL I2C_write                             ; If no, print char
+    RJMP  wrt                                   ; Loop back & get next character
+fin:
+    RCALL I2C_stop
+    RET
+    
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 I2C_init:
     LDI   R21, 0
@@ -236,21 +275,35 @@ I2C_init:
     STS   TWCR, R21       ;enable TWI
     RET
 
+;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
+I2C_write:
+    STS   TWDR, R22       ;copy SLA+W into data register
+    LDI   R21, (1<<TWINT)|(1<<TWEN)
+    STS   TWCR, R21       ;transmit SLA+W
+wt2:LDS   R21, TWCR
+    SBRS  R21, TWINT
+    RJMP  wt2             ;wait for end of transmission
+    RET
+
+;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
+I2C_start:
+    LDI   R21, (1<<TWINT)|(1<<TWSTA)|(1<<TWEN)
+    STS   TWCR, R21       ;transmit START condition
+wtw:LDS   R21, TWCR
+    SBRS  R21, TWINT      ;TWI interrupt = 1?
+    RJMP  wtw             ;no, wait for end of transmission
+    RET
+
+;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
+
+I2C_stop:
+    LDI   R21, (1<<TWINT)|(1<<TWSTO)|(1<<TWEN)
+    STS   TWCR, R21       ;transmit STOP condition
+    RET
+
+;==============================================================
 ; ========= Button Selection =========
 select_button:
-    ; in r19, PINC
-
-    ; lds   r16, PINC      ; Load PINC into r16
-    ; sbrs  r16, 0         ; Skip if PC0 is high
-    ; rjmp  set_500
-
-    ; lds   r16, PINC
-    ; sbrs  r16, 1
-    ; rjmp  set_1000
-
-    ; lds   r16, PINC
-    ; sbrs  r16, 2
-    ; rjmp  set_2000
 
     LDI R16, 0          ;default jarak = 500m
     LDS R5, PINC
@@ -263,18 +316,7 @@ select_button:
     ;SBIC PINC, 2
     SBRC R5, 2
     LDI R16 , 2
-
-    RET
-;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
-I2C_write:
-    STS   TWDR, R22       ;copy SLA+W into data register
-    LDI   R21, (1<<TWINT)|(1<<TWEN)
-    STS   TWCR, R21       ;transmit SLA+W
-    ;----------------------------------------------------------
-wt2:LDS   R21, TWCR
-    SBRS  R21, TWINT
-    RJMP  wt2             ;wait for end of transmission
-    RET
+    JMP select_button
 
 ; ========= Set Distance Values =========
 set_500:
@@ -314,6 +356,10 @@ wait_start:
 
     clr r18
     out PORTB, r18
+
+    LDI   R30, lo8(message_running)
+    LDI   R31, hi8(message_running)
+    CALL  lcd_print
     rjmp main
 
 ; ========= Delay Subroutines =========
