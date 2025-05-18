@@ -1,4 +1,7 @@
 # PaceGuard - Proyek Akhir Sistem Embedded Kelompok 11
+
+![PGBanner](https://i.imgur.com/G5uq6lu.png)
+
 ## i. Pendahuluan
 ### Nama dan NPM anggota
 - Anthonius Hendhy Wirawan / 2306161795
@@ -6,20 +9,26 @@
 - Maxwell Zefanya Ginting / 2306221200
 - Ruben Kristanto / 2306214624
 ### Latar belakang
-Pada proyek ini, masalah yang ingin dipecahkan adalah bagaimana pelaksanaan kegiatan lari bisa dilakukan dengan lebih mudah, murah, serta lebih akurat. Sebagai konteks, kegiatan lari memerlukan 3 komponen utama supaya kegiatan bisa berjalan dengan lancar. Pertama, diperlukan sebuah metode untuk mengendalikan alur kegiatan lari. Artinya, diperlukan sebuah komponen yang bisa memulai dan memberhentikan kegiatan tersebut. Kedua, diperlukan juga metode untuk mencatat seberapa cepat pelari bisa menempuh jarak tertentu. Komponen yang bisa memenuhi keperluan ini harus bisa mengukur jarak lari dengan akurat serta mencatat waktu yang ditempuh oleh pelari untuk melewati jarak tersebut. Terakhir, pelari tersebut perlu mengetahui seberapa cepat ia lari, sehingga bisa mengatur kecepatannya supaya tidak terlalu kelelahan. Keperluan ini bisa diraih menggunakan komponen yang bisa menampilkan kecepatan sang pelari.  
+Dalam dunia olahraga lari, presisi waktu adalah faktor krusial. Perbedaan satu milidetik dapat menentukan kemenangan atau kekalahan seorang atlet. Sistem pencatatan waktu yang akurat bukan hanya pelengkap, melainkan komponen vital dalam evaluasi performa atletik
 
-Berdasarkan konteks yang diberikan, dapat dilihat bahwa kegiatan lari memerlukan banyak komponen berbeda supaya kegiatan bisa berjalan dengan lancar. Terlebih lagi, semua komponen tersebut perlu bekerja sama satu dengan yang lainnya agar tidak saling mengganggu dan mengurangi kinerja tiap komponen. Hal ini menyebabkan kegiatan lari membutuhkan biaya yang tidak murah. Kelompok kami membuat proyek ini dengan tujuan menyelesaikan permasalahan biaya dengan tetap mempertahankan kualitas tiap komponen kegiatan lari. Solusi yang didapatkan adalah dengan membuat sebuah sistem berbasis Arduino yang mengintegrasikan komponen pengendalian, pencatatan dan penampilan waktu menjadi satu solusi yang lebih mudah, murah, serta akurat ketimbang solusi yang tidak melakukan integrasi.  
+Sayangnya, teknologi pengukuran waktu yang tersedia sering kali mahal, kompleks, atau tidak cocok untuk pelatihan mandiri. Banyak pelari terutama untuk jarak jauh atau marathon, bergantung pada strategi pacing untuk mengoptimalkan energi. Tanpa sistem yang akurat untuk mengukur waktu secara real-time, pelari sulit mengetahui apakah mereka mempertahankan kecepatan ideal
+
+PaceGuard oleh kelompok kami hadir sebagai solusi atas tantangan ini. Sistem yang kami buat menggunakan Microcontroller ATMega238P ini memungkinkan pelari memantau waktu tempuh di titik-titik tertentu secara otomatis sehingga membantu mereka melatih konsistensi kecepatan. Namun dengan simplisitanya, kami berharap PaceGuard tidak hanya untuk atlet profesional, tapi juga dapat dijangkau oleh pelatih, komunitas lari, dan individu yang ingin meningkatkan performa larinyadengan cara yang terukur dan terjangkau
+
+Teknologi utama untuk fungsionalitas PaceGuard terletak di  sensor IR dan  Microcontroller ATMega238P pada arduino yang diprogram dengan Assembly AVR. Oleh karena itu, PaceGuard menawarkan akurasi tinggi, respons cepat, dan kinerja bagus bahkan dalam kondisi outdoor. PaceGuard menjadikan waktu sebagai sahabat, karena bahkan hitungan milidetik sangat berharga untuk dunia lari profesional.
 
 ## ii. Desain dan Implementasi Hardware
 ### Alat dan Bahan
-- 1x Breadboard small
-- 1x Arduino UNO R3
-- 1x KY-032 Infrared Sensor
-- 1x 16x2 LCD with I2C adapter
-- 3x LED
-- 3x Button
-- 7x Resistor
-- Kabel jumper
+| Komponen                  | Jumlah |
+|---------------------------|--------|
+| Breadboard small          | 1x     |
+| Arduino UNO R3            | 1x     |
+| KY-032 Infrared Sensor    | 1x     |
+| 16x2 LCD with I2C adapter | 1x     |
+| LED                       | 3x     |
+| Button                    | 3x     |
+| Resistor                  | 7x     |
+| Kabel jumper              | Secukupnya |
 
 ### Desain & Implementasi
 ![](https://i.imgur.com/PgDKn8w.png)  
