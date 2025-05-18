@@ -53,10 +53,14 @@
     pace_current:   .byte 0
     ir_state_prev:  .byte 0
 
-    message_welcome:    .asciz "PaceGuard System"
-    message_ready:      .asciz "Ready to Start"
-    message_running:    .asciz "Running..."
-    message_lap:        .asciz "Lap: "
+    message_welcome:    .ascii "PaceGuard System"
+                        .byte 0
+    message_ready:      .ascii "Ready to Start"
+                        .byte 0
+    message_running:    .ascii "Running..."
+                        .byte 0
+    message_lap:        .ascii "Lap: "
+                        .byte 0
 
     message_time:       .ascii "Time: "
     message_pace:       .ascii "Pace: "
@@ -236,27 +240,44 @@ __vector_2:
 ;========================= I2C & LCD ==========================
 lcd_print:
     RCALL I2C_start
-    LDI   R22, 0b01000000                       ; Set slave address
+    LDI   R22, 0x20                             ; Set slave address
     RCALL I2C_write
+
+    LDI   R22, 0b10000000                       ; Step 0: Initialization
+    RCALL I2C_write
+    LDI   R22, 0b00111100
+    RCALL I2C_write
+    CALL  delay_4200us
+
+    LDI   R22, 0b10000000                       ;         Initialization
+    RCALL I2C_write
+    LDI   R22, 0b00111100
+    RCALL I2C_write
+    CALL  delay_120us
+
     LDI   R22, 0b10000000                       ; Step 1: Function set
     RCALL I2C_write
-    LDI   R22, 0b00111100                       
+    LDI   R22, 0b00110000                       ; 1-line mode, display ON
     RCALL I2C_write
+
     LDI   R22, 0b10000000                       ; Step 2: Display ON
     RCALL I2C_write
-    LDI   R22, 0b00001100
+    LDI   R22, 0b00001100                       ; Display ON, cursor ON, blink OFF
     RCALL I2C_write
-    LDI   R22, 0b10000000                       ; Step 3: Display CLR
+
+    LDI   R22, 0b10000000                       ; Step 3: Screen CLR
     RCALL I2C_write
     LDI   R22, 0b00000001
     RCALL I2C_write
+
     LDI   R22, 0b10000000                       ; Step 4: Entry mode
     RCALL I2C_write
-    LDI   R22, 0b00000100
+    LDI   R22, 0b00000110                       ; Increment & shift
     RCALL I2C_write
-    LDI   R22, 0b01000000                       ; Begin transmit chars
+
+wrt:LDI   R22, 0b11000000                       ; Begin transmit chars
     RCALL I2C_write
-wrt:LPM   R22, Z+                               ; Load char of string onto R22
+    LPM   R22, Z+                               ; Load char of string onto R22
     CPI   R22, 0                                ; Check if R22=0 (end of string)
     BREQ  fin                                   ; If yes, exit
     RCALL I2C_write                             ; If no, print char
@@ -278,7 +299,7 @@ I2C_init:
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 I2C_write:
     STS   TWDR, R22       ;copy SLA+W into data register
-    LDI   R21, (1<<TWINT)|(1<<TWEN)
+    LDI   R21, (1<<TWINT)|(1<<TWEN)|(1<<TWEA)
     STS   TWCR, R21       ;transmit SLA+W
 wt2:LDS   R21, TWCR
     SBRS  R21, TWINT
@@ -287,7 +308,7 @@ wt2:LDS   R21, TWCR
 
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 I2C_start:
-    LDI   R21, (1<<TWINT)|(1<<TWSTA)|(1<<TWEN)
+    LDI   R21, (1<<TWINT)|(1<<TWSTA)|(1<<TWEN)|(1<<TWEA)
     STS   TWCR, R21       ;transmit START condition
 wtw:LDS   R21, TWCR
     SBRS  R21, TWINT      ;TWI interrupt = 1?
@@ -511,3 +532,36 @@ l4:
     CLR R24
     RET
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
+
+delay_120us:
+    ; ~~ Delay 120 us  ~~
+        ldi  r18, 4
+        ldi  r19, 82
+    d1: dec  r19
+        brne d1
+        dec  r18
+        brne d1
+        nop
+    ; ~~ ~~ ~~ ~ ~~ ~~ ~~
+
+delay_4200us:
+    ; ~~ Delay 4200 us ~~
+        ldi  r18, 88
+        ldi  r19, 69
+    d2: dec  r19
+        brne d2
+        dec  r18
+        brne d2
+        ret
+    ; ~~ ~~ ~~ ~ ~~ ~~ ~~
+    
+delay_1535us:
+    ; ~~ Delay 1535 us ~~
+        ldi  R21, 32
+        ldi  R22, 229
+    d3: dec  R22
+        brne d3
+        dec  R21
+        brne d3
+        ret
+    ; ~~ ~~ ~~ ~ ~~ ~~ ~~
