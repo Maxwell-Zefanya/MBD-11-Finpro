@@ -69,15 +69,12 @@ Display LCD akan menampilkan berbagai pesan informasi yang diperlukan kepada pel
 - Arduino IDE
 
 ### Desain & Implementasi
-![](https://imgur.com/l9prUF2.png)
+![overall_flowchart](https://i.imgur.com/ZYDZrjp.png)
 
 Note: Kode yang direferensikan pada README ini seluruhnya terletak pada **./Kode/Kode.S**  
 
 PaceGuard memiliki program software yang dibuat secara khusus untuk keperluan pacing. Software tersebut ditulis sepenuhnya dalam bahasa assembly, dan ditargetkan untuk microprocessor ATMega328P yang terdapat pada Arduino UNO R3. Alur kerja program bisa dibagi menjadi 7 bagian utama, sesuai dengan gambar flowchart di atas. Arduino yang ada pada sistem bisa mendapatkan program dengan pertama mengcompile (verify) kode kemudian menguploadnya menggunakan software Arduino IDE.  
 
-Secara lebih lengkap, alur kerja dari program adalah sebagai berikut:  
-
-![overall_flowchart](https://i.imgur.com/ZYDZrjp.png)
 
 #### 1. Setup
 Fase setup dilakukan untuk memastikan Arduino bisa berkomunikasi dengan komponen eksternal secara benar dan efisien. Kode pada fase ini sebagian besar terdapat pada label `main`. Hal-hal yang diatur pada fase setup adalah sebagai berikut  
