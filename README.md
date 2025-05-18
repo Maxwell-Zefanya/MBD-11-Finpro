@@ -31,7 +31,7 @@ Teknologi utama untuk fungsionalitas PaceGuard terletak di  sensor IR dan  Micro
 | Kabel jumper              | Secukupnya |
 
 ### Desain & Implementasi
-![](https://i.imgur.com/PgDKn8w.png)  
+![](https://i.imgur.com/NtRtTbe.png)  
 
 PaceGuard terdiri atas sebuah komponen utama, yaitu Arduino, yang mengendalikan 5 komponen pembantu lainnya, yaitu komponen LED, button, LCD Display, serial display, serta sensor. Sistem ini akan mendapatkan daya listriknya melalui power supply independen dengan tegangan 5V yang perlu dihubungkan kepada Arduino serta breadboard menggunakan kabel jumper. Selain daripada kedua hal itu, power supply tidak perlu dihubungkan ke komponen lainnya.  
 
