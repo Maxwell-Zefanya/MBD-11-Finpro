@@ -136,7 +136,16 @@ Fase reset hanya akan berjalan bila tombol enable dipencet setelah fase start be
 
 
 ## iv. Hasil dan Evaluasi Pengujian
+### hasil yang diharapkan
+hasil yang idealnya didapatkan dari Running Pace Monitoring System ini adalah berfungsinya keseluruhan dari sistem, dimana user pertama tama dapat memilih jarak dari track (1000m atau 2000m), kemudian memulai lap, akan ada indikator untuk memulai timer, dimana akan dinyalakan lampu LED secara bergantian, yang masing masing berwarna merah, kuning, dan hijau. Ketika lampu hijau menyala, maka timer akan dimulai, dan akan menyimpan nilai waktu yang telah berlalu di register. Setelah user melewati dan memicu sensor infrared, maka akan terpicu interrupt, dimana akan menghentikan timer, mengolah data waktu yang didapatkan, seperti mengubah data detik menjadi format menit:detik, mengonversi valuenya berdasarkan jarak untuk menghitung pace, serta mengubah value hasil perhitungan menjadi bentuk BCD dan ASCII untuk ditampilkan pada serial monitor. Sebagai hasil akhir dari sistem ini, akan ditampilkan waktu yang dihabiskan oleh user untuk berlalu tiap lapnya (dalam bentuk menit:detik) serta pace dari user selama berlari.
+### Hasil dan analisis
+![](https://i.imgur.com/QRe9dfi.png)  
+implementasi software yang kami terapkan kepada rangkaian di simulasi menghasilkan hasil yang cukup memuaskan. Hampir semua fitur yang ada pada spesifikasi awal bisa berjalan dengan baik. Pengecualian terdapat pada LCD I2C, yang meskipun bisa mengeprint karakter di layar LCD, karakter yang ditampilkan tidak sesuai dengan keinginan.  
+Ketidakbisaannya LCD dalam mengeprint karakter yang benar terdapat pada kesalahan di kode. Hal ini adalah karena datasheet yang diambil sebagai referensi dari internet memiliki banyak data dan cara penggunaan yang kontradiktif. Alhasil, baik setup maupun pengiriman data karakter menjadi tidak sesuai spesifikasi yang ada khusus display LCD tersebut
 
 
 ## v. Kesimpulan
+* PaceGuard berhasil memampukan pelari untuk mengatur pace sesuai dengan kebutuhannya serta menampilkan data lap yang akurat. 
+* Akurasi dan keresponsifan PaceGuard dapat dicapai berkat penggunaan interrupt dan kode assembly yang efisien
+* Penggunaan LCD dan Serial display bisa memungkinkan pelari untuk melihat informasi yang penting mengenai kegiatan larinya
 

@@ -134,7 +134,11 @@ main:
     LDI   R30, lo8(message_ready)
     LDI   R31, hi8(message_ready)
     CALL  lcd_print
-    JMP   select_button
+
+    SEI
+
+waitbtn:
+    RCALL   select_button
 
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 loop:
@@ -238,7 +242,7 @@ start_timer:
 ;~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~;
 ; Interrupt for sensor
 ; Purpose: stop timer
-__vector_2:
+__vector_1:
     ;Disable clock
     LDI R28, 0b00000000
     STS TCCR1B, R28
@@ -342,15 +346,24 @@ select_button:
 
     LDI R16, 0          ;default jarak = 500m
     LDS R5, PINC
-    SBRC R5, 0
-    ;SBIC PINC, 0
-    LDI R16 , 0
-    ;SBIC PINC, 1
     SBRC R5, 1
-    LDI R16 , 1
-    ;SBIC PINC, 2
+    JMP set1000
     SBRC R5, 2
+    JMP set2000
+    JMP select_button
+
+set500:
+    LDI R16 , 0
+    JMP wait1
+
+set1000:
+    LDI R16 , 1
+    JMP wait1
+
+
+set2000:
     LDI R16 , 2
+    JMP wait1
 
 wait1:
     lds   r16, PIND
