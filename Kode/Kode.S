@@ -1,7 +1,19 @@
-#include <avr/io.h>
+;  ____                 ____                      _ 
+; |  _ \ __ _  ___ ___ / ___| _   _  __ _ _ __ __| |
+; | |_) / _` |/ __/ _ \ |  _ | | | |/ _` | '__/ _` |
+; |  __/ (_| | (_|  __/ |_| || |_| | (_| | | | (_| |
+; |_|   \__,_|\___\___|\____| \__,_|\__,_|_|  \__,_|
+;    
 
 ;==============================================================
-
+; PaceGuard - Proyek Akhir Sistem Embedded Kelompok 11
+;==============================================================
+; Anggota Kelompok:
+; - Anthonius Hendhy Wirawan / 2306161795
+; - Javana Muhammad Dzaki / 2306161826
+; - Maxwell Zefanya Ginting / 2306221200
+; - Ruben Kristanto / 2306214624
+;==============================================================
 ;   Register Usage Documentation
 ;   R16: Setup, distance state
 ;   R17: conversion result (minute)
@@ -21,6 +33,8 @@
 ;   R31: Serial communication, I2C load message
 
 ;==============================================================
+#include <avr/io.h>
+
     ; Pin Directives
     ; Digital: use in PORTD
     .equ BTN_ENA, 0
