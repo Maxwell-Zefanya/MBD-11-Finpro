@@ -77,6 +77,8 @@ PaceGuard memiliki program software yang dibuat secara khusus untuk keperluan pa
 
 Secara lebih lengkap, alur kerja dari program adalah sebagai berikut:  
 
+![overall_flowchart](https://i.imgur.com/ZYDZrjp.png)
+
 #### 1. Setup
 Fase setup dilakukan untuk memastikan Arduino bisa berkomunikasi dengan komponen eksternal secara benar dan efisien. Kode pada fase ini sebagian besar terdapat pada label `main`. Hal-hal yang diatur pada fase setup adalah sebagai berikut  
 
@@ -132,6 +134,8 @@ Perlu diketahui juga bahwa terdapat pola pengiriman sekuensial khusus yang perlu
 Fase reset hanya akan berjalan bila tombol enable dipencet setelah fase start berlangsung. Fase ini adalah fase yang paling sederhana, dimana secara implementasi hal yang dilakukan hanyalah mengubah lap-time menjadi 0 dan menambahkan 1 kedalam lap counter.  
 
 
+#### Interrupt handling
+![](https://i.imgur.com/ictMoF9.png)
 
 
 ## iv. Hasil dan Evaluasi Pengujian
